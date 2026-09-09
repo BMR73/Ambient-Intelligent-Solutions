@@ -3,51 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <title>Chef Display - AIS Demo</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
 
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .order-box {
-            border: 2px solid #333;
-            padding: 15px;
-            border-radius: 6px;
-            background-color: #fafafa;
-        }
-
-        .label {
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        .item {
-            margin-left: 15px;
-        }
-
-        .status {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #d1ffd1;
-            border: 1px solid #4CAF50;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-    </style>
+    <!-- Link to external stylesheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
+
+<body>
+    <div class="container">
+        <h2>Kitchen Display — AIS Demo</h2>
+
+        <div class="order-box" id="orderBox">
+            <div class="label">Table Number:</div>
+            <div id="tableNumber">—</div>
+
+            <div class="label">Seat Number:</div>
+            <div id="seatNumber">—</div>
+
+            <div class="label">Items:</div>
+            <div id="itemsList">—</div>
+
+            <div class="label">Modifiers:</div>
+            <div id="modifiersList">—</div>
+
+            <div class="status" id="orderStatus">Waiting for order...</div>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder JSON until Azure is wired in
+        const sampleOrder = {
+            table: 12,
+            seat: 2,
+            items: [
+                { name: "Salmon", modifiers: ["no dairy"] },
+                { name: "Sparkling Water", modifiers: [] }
+            ],
+            status: "Sent to Kitchen"
+        };
+
+        // Function to update the page
+        function updateChefScreen(order) {
+            document.getElementById("tableNumber").innerText = order.table;
+            document.getElementById("seatNumber").innerText = order.seat;
+
+            document.getElementById("itemsList").innerHTML =
+                order.items.map(i => `<div class="item">${i.name}</div>`).join("");
+
+            document.getElementById("modifiersList").innerHTML =
+                order.items.map(i =>
+                    i.modifiers.length > 0
+                        ? `<div class="item">${i.modifiers.join(", ")}</div>`
+                        : `<div class="item">None</div>`
+                ).join("");
+
+            document.getElementById("orderStatus").innerText = order.status;
+        }
+
+        // Initial load
+        updateChefScreen(sampleOrder);
+
+        // Placeholder auto-refresh (you will replace the fetch call later)
+        setInterval(() => {
+            console.log("Auto-refresh tick");
+        }, 5000);
+    </script>
+</body>
+</html>
