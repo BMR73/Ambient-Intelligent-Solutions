@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chef Display - AIS Demo</title>
-
-    <!-- Link to external stylesheet -->
+    <title>Kitchen Display — AIS Demo</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -13,6 +11,13 @@
         <h2>Kitchen Display — AIS Demo</h2>
 
         <div class="order-box" id="orderBox">
+
+            <div class="label">Waitstaff Name:</div>
+            <div id="waitstaffName">—</div>
+
+            <div class="label">Waitstaff ID:</div>
+            <div id="waitstaffId">—</div>
+
             <div class="label">Table Number:</div>
             <div id="tableNumber">—</div>
 
@@ -30,42 +35,53 @@
     </div>
 
     <script>
-        // Placeholder JSON until Azure is wired in
-        const sampleOrder = {
-            table: 12,
-            seat: 2,
-            items: [
-                { name: "Salmon", modifiers: ["no dairy"] },
-                { name: "Sparkling Water", modifiers: [] }
-            ],
-            status: "Sent to Kitchen"
-        };
+        async function loadOrder() {
+            try {
+                const response = await fetch('/api/getLatestOrder');
+                const order = await response.json();
 
-        // Function to update the page
-        function updateChefScreen(order) {
-            document.getElementById("tableNumber").innerText = order.table;
-            document.getElementById("seatNumber").innerText = order.seat;
+                // Waitstaff
+                document.getElementById("waitstaffName").innerText =
+                    order.waitstaff?.name || "—";
 
-            document.getElementById("itemsList").innerHTML =
-                order.items.map(i => `<div class="item">${i.name}</div>`).join("");
+                document.getElementById("waitstaffId").innerText =
+                    order.waitstaff?.id || "—";
 
-            document.getElementById("modifiersList").innerHTML =
-                order.items.map(i =>
-                    i.modifiers.length > 0
-                        ? `<div class="item">${i.modifiers.join(", ")}</div>`
-                        : `<div class="item">None</div>`
-                ).join("");
+                // Table + Seat
+                document.getElementById("tableNumber").innerText =
+                    order.table?.number || "—";
 
-            document.getElementById("orderStatus").innerText = order.status;
+                document.getElementById("seatNumber").innerText =
+                    order.table?.seat || "—";
+
+                // Items
+                document.getElementById("itemsList").innerHTML =
+                    order.items?.map(i =>
+                        `<div class="item">${i.name}</div>`
+                    ).join("") || "—";
+
+                // Modifiers
+                document.getElementById("modifiersList").innerHTML =
+                    order.items?.map(i =>
+                        i.modifiers?.length
+                            ? `<div class="item">${i.modifiers.join(", ")}</div>`
+                            : `<div class="item">None</div>`
+                    ).join("") || "—";
+
+                // Status
+                document.getElementById("orderStatus").innerText =
+                    order.status || "—";
+
+            } catch (err) {
+                console.error("Error loading order:", err);
+            }
         }
 
         // Initial load
-        updateChefScreen(sampleOrder);
+        loadOrder();
 
-        // Placeholder auto-refresh (you will replace the fetch call later)
-        setInterval(() => {
-            console.log("Auto-refresh tick");
-        }, 5000);
+        // Auto-refresh every 5 seconds
+        setInterval(loadOrder, 5000);
     </script>
 </body>
 </html>
