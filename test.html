@@ -36,14 +36,11 @@ async function sendOrder() {
     const jsonText = document.getElementById("jsonInput").value;
 
     try {
-        const response = await fetch(
-            "https://green-ocean-0b552d71e.3.azurestaticapps.net/api/orderUpdate",
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: jsonText
-            }
-        );
+        const response = await fetch("/api/orderUpdate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: jsonText
+        });
 
         const result = await response.json();
         document.getElementById("resultBox").innerText =
