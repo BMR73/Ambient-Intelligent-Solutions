@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OrderUpdate Test Form</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        textarea { width: 100%; height: 250px; }
+        button { padding: 10px 20px; margin-top: 10px; }
+        .result { margin-top: 20px; padding: 10px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+
+<h2>Test OrderUpdate Endpoint</h2>
+
+<p>Send JSON directly to your Azure Function:</p>
+
+<textarea id="jsonInput">
+{
+  "waitstaff": { "id": "A01", "name": "Maria" },
+  "table": { "number": 12, "seat": 2 },
+  "items": [
+    { "name": "Salmon", "modifiers": ["no dairy"] },
+    { "name": "Sparkling Water", "modifiers": [] }
+  ],
+  "status": "Sent to Kitchen"
+}
+</textarea>
+
+<button onclick="sendOrder()">Send Order</button>
+
+<div class="result" id="resultBox">Result will appear here...</div>
+
+<script>
+async function sendOrder() {
+    const jsonText = document.getElementById("jsonInput").value;
+
+    try {
+        const response = await fetch(
+            "https://green-ocean-0b552d71e.3.azurestaticapps.net/api/orderUpdate",
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: jsonText
+            }
+        );
+
+        const result = await response.json();
+        document.getElementById("resultBox").innerText =
+            JSON.stringify(result, null, 2);
+
+    } catch (err) {
+        document.getElementById("resultBox").innerText =
+            "Error: " + err.toString();
+    }
+}
+</script>
+
+</body>
+</html>
