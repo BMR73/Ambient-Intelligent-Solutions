@@ -10,78 +10,64 @@
     <div class="container">
         <h2>Kitchen Display — AIS Demo</h2>
 
-        <div class="order-box" id="orderBox">
-
-            <div class="label">Waitstaff Name:</div>
-            <div id="waitstaffName">—</div>
-
-            <div class="label">Waitstaff ID:</div>
-            <div id="waitstaffId">—</div>
-
-            <div class="label">Table Number:</div>
-            <div id="tableNumber">—</div>
-
-            <div class="label">Seat Number:</div>
-            <div id="seatNumber">—</div>
-
-            <div class="label">Items:</div>
-            <div id="itemsList">—</div>
-
-            <div class="label">Modifiers:</div>
-            <div id="modifiersList">—</div>
-
-            <div class="status" id="orderStatus">Waiting for order...</div>
-        </div>
+        <!-- Multi-table container -->
+        <div id="ordersContainer"></div>
     </div>
 
     <script>
-        async function loadOrder() {
+        async function loadOrders() {
             try {
-                const response = await fetch('/api/getLatestOrder');
-                const order = await response.json();
+                const response = await fetch('/api/getOrders');
+                const orders = await response.json();
 
-                // Waitstaff
-                document.getElementById("waitstaffName").innerText =
-                    order.waitstaff?.name || "—";
+                const container = document.getElementById("ordersContainer");
+                container.innerHTML = "";
 
-                document.getElementById("waitstaffId").innerText =
-                    order.waitstaff?.id || "—";
+                // Loop through each table
+                Object.keys(orders).forEach(tableNum => {
+                    const order = orders[tableNum];
 
-                // Table + Seat
-                document.getElementById("tableNumber").innerText =
-                    order.table?.number || "—";
+                    const box = document.createElement("div");
+                    box.className = "order-box";
 
-                document.getElementById("seatNumber").innerText =
-                    order.table?.seat || "—";
+                    box.innerHTML = `
+                        <div class="label">Waitstaff:</div>
+                        <div>${order.waitstaff?.name || "—"} (${order.waitstaff?.id || "—"})</div>
 
-                // Items
-                document.getElementById("itemsList").innerHTML =
-                    order.items?.map(i =>
-                        `<div class="item">${i.name}</div>`
-                    ).join("") || "—";
+                        <div class="label">Table:</div>
+                        <div>${order.table?.number || "—"}</div>
 
-                // Modifiers
-                document.getElementById("modifiersList").innerHTML =
-                    order.items?.map(i =>
-                        i.modifiers?.length
-                            ? `<div class="item">${i.modifiers.join(", ")}</div>`
-                            : `<div class="item">None</div>`
-                    ).join("") || "—";
+                        <div class="label">Seat:</div>
+                        <div>${order.table?.seat || "—"}</div>
 
-                // Status
-                document.getElementById("orderStatus").innerText =
-                    order.status || "—";
+                        <div class="label">Items:</div>
+                        <div>
+                            ${order.items?.map(i => i.name).join(", ") || "—"}
+                        </div>
+
+                        <div class="label">Modifiers:</div>
+                        <div>
+                            ${order.items?.map(i =>
+                                i.modifiers?.length ? i.modifiers.join(", ") : "None"
+                            ).join(" | ")}
+                        </div>
+
+                        <div class="status">${order.status || "—"}</div>
+                    `;
+
+                    container.appendChild(box);
+                });
 
             } catch (err) {
-                console.error("Error loading order:", err);
+                console.error("Error loading orders:", err);
             }
         }
 
         // Initial load
-        loadOrder();
+        loadOrders();
 
         // Auto-refresh every 5 seconds
-        setInterval(loadOrder, 5000);
+        setInterval(loadOrders, 5000);
     </script>
 </body>
 </html>
