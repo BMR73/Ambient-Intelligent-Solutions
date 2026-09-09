@@ -4,28 +4,46 @@
     <title>OrderUpdate Test Form</title>
     <style>
         body { font-family: Arial; padding: 20px; }
-        textarea { width: 100%; height: 250px; }
-        button { padding: 10px 20px; margin-top: 10px; }
+        label { display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; }
+        button { padding: 10px 20px; margin-top: 20px; }
         .result { margin-top: 20px; padding: 10px; background: #f0f0f0; }
     </style>
 </head>
 <body>
 
-<h2>Test OrderUpdate Endpoint</h2>
+<h2>Send Order to Kitchen</h2>
 
-<p>Send JSON directly to your Azure Function:</p>
+<label>Waitstaff Name</label>
+<input id="waitstaffName" placeholder="Maria">
 
-<textarea id="jsonInput">
-{
-  "waitstaff": { "id": "A01", "name": "Maria" },
-  "table": { "number": 12, "seat": 2 },
-  "items": [
-    { "name": "Salmon", "modifiers": ["no dairy"] },
-    { "name": "Sparkling Water", "modifiers": [] }
-  ],
-  "status": "Sent to Kitchen"
-}
-</textarea>
+<label>Waitstaff ID</label>
+<input id="waitstaffId" placeholder="A01">
+
+<label>Table Number</label>
+<input id="tableNumber" type="number" placeholder="12">
+
+<label>Seat Number</label>
+<input id="seatNumber" type="number" placeholder="2">
+
+<label>Food Item</label>
+<input id="foodItem" placeholder="Salmon">
+
+<label>Food Modifiers (comma separated)</label>
+<input id="foodModifiers" placeholder="no dairy">
+
+<label>Drink Item</label>
+<input id="drinkItem" placeholder="Sparkling Water">
+
+<label>Drink Modifiers (comma separated)</label>
+<input id="drinkModifiers" placeholder="">
+
+<label>Status</label>
+<select id="orderStatus">
+    <option value="Sent to Kitchen">Sent to Kitchen</option>
+    <option value="Cooking">Cooking</option>
+    <option value="Ready">Ready</option>
+</select>
 
 <button onclick="sendOrder()">Send Order</button>
 
@@ -33,13 +51,37 @@
 
 <script>
 async function sendOrder() {
-    const jsonText = document.getElementById("jsonInput").value;
+    const order = {
+        waitstaff: {
+            id: document.getElementById("waitstaffId").value,
+            name: document.getElementById("waitstaffName").value
+        },
+        table: parseInt(document.getElementById("tableNumber").value),
+        seat: parseInt(document.getElementById("seatNumber").value),
+        items: [
+            {
+                name: document.getElementById("foodItem").value,
+                modifiers: document.getElementById("foodModifiers").value
+                    .split(",")
+                    .map(m => m.trim())
+                    .filter(m => m.length > 0)
+            },
+            {
+                name: document.getElementById("drinkItem").value,
+                modifiers: document.getElementById("drinkModifiers").value
+                    .split(",")
+                    .map(m => m.trim())
+                    .filter(m => m.length > 0)
+            }
+        ],
+        status: document.getElementById("orderStatus").value
+    };
 
     try {
         const response = await fetch("/api/orderUpdate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: jsonText
+            body: JSON.stringify(order)
         });
 
         const result = await response.json();
