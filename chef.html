@@ -9,10 +9,10 @@ async function loadLatestOrder() {
     }
 }
 
-// Update the chef screen with live data
 function updateChefScreen(order) {
-    document.getElementById("tableNumber").innerText = order.table.number;
-    document.getElementById("seatNumber").innerText = order.table.seat;
+    // Your API returns: table: 12, seat: 2
+    document.getElementById("tableNumber").innerText = order.table;
+    document.getElementById("seatNumber").innerText = order.seat;
 
     document.getElementById("itemsList").innerHTML =
         order.items.map(i => `<div class="item">${i.name}</div>`).join("");
