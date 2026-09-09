@@ -1,3 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kitchen Display</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .section { margin-bottom: 20px; }
+        .label { font-weight: bold; }
+        .item { margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>Kitchen Display</h2>
+
+<div class="section">
+    <span class="label">Table:</span>
+    <span id="tableNumber"></span>
+</div>
+
+<div class="section">
+    <span class="label">Seat:</span>
+    <span id="seatNumber"></span>
+</div>
+
+<div class="section">
+    <span class="label">Items:</span>
+    <div id="itemsList"></div>
+</div>
+
+<div class="section">
+    <span class="label">Modifiers:</span>
+    <div id="modifiersList"></div>
+</div>
+
+<div class="section">
+    <span class="label">Status:</span>
+    <span id="orderStatus"></span>
+</div>
+
 <script>
 async function loadLatestOrder() {
     try {
@@ -10,7 +50,6 @@ async function loadLatestOrder() {
 }
 
 function updateChefScreen(order) {
-    // Your API returns: table: 12, seat: 2
     document.getElementById("tableNumber").innerText = order.table;
     document.getElementById("seatNumber").innerText = order.seat;
 
@@ -33,3 +72,6 @@ loadLatestOrder();
 // Auto-refresh every 5 seconds
 setInterval(loadLatestOrder, 5000);
 </script>
+
+</body>
+</html>
