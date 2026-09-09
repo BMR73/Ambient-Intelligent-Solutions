@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chef Display - AIS Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .order-box {
+            border: 2px solid #333;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #fafafa;
+        }
+
+        .label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .item {
+            margin-left: 15px;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #d1ffd1;
+            border: 1px solid #4CAF50;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
