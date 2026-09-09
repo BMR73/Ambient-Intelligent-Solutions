@@ -1,74 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-    <!-- force redeploy -->
-<head>
-    <meta charset="UTF-8">
-    <title>Kitchen Display — AIS Demo</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+<script>
+async function loadLatestOrder() {
+    try {
+        const response = await fetch("/api/getLatestOrder");
+        const order = await response.json();
+        updateChefScreen(order);
+    } catch (err) {
+        console.error("Failed to load order:", err);
+    }
+}
 
-<body>
-    <div class="container">
-        <h2>Kitchen Display — AIS Demo</h2>
+// Update the chef screen with live data
+function updateChefScreen(order) {
+    document.getElementById("tableNumber").innerText = order.table.number;
+    document.getElementById("seatNumber").innerText = order.table.seat;
 
-        <!-- Multi-table container -->
-        <div id="ordersContainer"></div>
-    </div>
+    document.getElementById("itemsList").innerHTML =
+        order.items.map(i => `<div class="item">${i.name}</div>`).join("");
 
-    <script>
-        async function loadOrders() {
-            try {
-                const response = await fetch('/api/getOrders');
-                const orders = await response.json();
+    document.getElementById("modifiersList").innerHTML =
+        order.items.map(i =>
+            i.modifiers.length > 0
+                ? `<div class="item">${i.modifiers.join(", ")}</div>`
+                : `<div class="item">None</div>`
+        ).join("");
 
-                const container = document.getElementById("ordersContainer");
-                container.innerHTML = "";
+    document.getElementById("orderStatus").innerText = order.status;
+}
 
-                // Loop through each table
-                Object.keys(orders).forEach(tableNum => {
-                    const order = orders[tableNum];
+// Initial load
+loadLatestOrder();
 
-                    const box = document.createElement("div");
-                    box.className = "order-box";
-
-                    box.innerHTML = `
-                        <div class="label">Waitstaff:</div>
-                        <div>${order.waitstaff?.name || "—"} (${order.waitstaff?.id || "—"})</div>
-
-                        <div class="label">Table:</div>
-                        <div>${order.table?.number || "—"}</div>
-
-                        <div class="label">Seat:</div>
-                        <div>${order.table?.seat || "—"}</div>
-
-                        <div class="label">Items:</div>
-                        <div>
-                            ${order.items?.map(i => i.name).join(", ") || "—"}
-                        </div>
-
-                        <div class="label">Modifiers:</div>
-                        <div>
-                            ${order.items?.map(i =>
-                                i.modifiers?.length ? i.modifiers.join(", ") : "None"
-                            ).join(" | ")}
-                        </div>
-
-                        <div class="status">${order.status || "—"}</div>
-                    `;
-
-                    container.appendChild(box);
-                });
-
-            } catch (err) {
-                console.error("Error loading orders:", err);
-            }
-        }
-
-        // Initial load
-        loadOrders();
-
-        // Auto-refresh every 5 seconds
-        setInterval(loadOrders, 5000);
-    </script>
-</body>
-</html>
+// Auto-refresh every 5 seconds
+setInterval(loadLatestOrder, 5000);
+</script>
