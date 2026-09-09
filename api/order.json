@@ -1,0 +1,9 @@
+{
+  "table": 12,
+  "seat": 2,
+  "items": [
+    { "name": "Salmon", "modifiers": ["no dairy"] },
+    { "name": "Sparkling Water", "modifiers": [] }
+  ],
+  "status": "Sent to Kitchen"
+}
