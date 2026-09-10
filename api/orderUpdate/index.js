@@ -1,31 +1,25 @@
+const fs = require("fs");
+const path = require("path");
+
 module.exports = async function (context, req) {
+    const filePath = path.join(__dirname, "..", "shared", "order.json");
+
     try {
-        const newOrder = req.body;
+        const order = req.body;
 
-        if (!newOrder) {
-            context.res = {
-                status: 400,
-                body: { error: "No JSON body received." }
-            };
-            return;
-        }
+        fs.writeFileSync(filePath, JSON.stringify(order, null, 2));
 
-        // TEMPORARY FIX: Just return the order instead of writing a file
         context.res = {
             status: 200,
             body: {
                 message: "Order received successfully.",
-                order: newOrder
+                order: order
             }
         };
-
-    } catch (error) {
+    } catch (err) {
         context.res = {
             status: 500,
-            body: {
-                error: "Failed to process order.",
-                details: error.message
-            }
+            body: { error: err.message }
         };
     }
 };
