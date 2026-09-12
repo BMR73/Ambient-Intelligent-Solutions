@@ -1,0 +1,6 @@
+# azure.yaml
+services:
+  api:
+    project: .
+    language: js
+    host: function
