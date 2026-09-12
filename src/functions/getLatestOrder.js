@@ -6,7 +6,6 @@ app.http("getLatestOrder", {
   handler: async (req, context) => {
     context.log("GET /getLatestOrder called");
 
-    // Example response — replace with your real logic
     return {
       status: 200,
       jsonBody: {
