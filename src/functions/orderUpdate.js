@@ -8,7 +8,6 @@ app.http("orderUpdate", {
 
     const body = await req.json();
 
-    // Example response — replace with your real logic
     return {
       status: 200,
       jsonBody: {
@@ -18,4 +17,5 @@ app.http("orderUpdate", {
     };
   }
 });
+
 
