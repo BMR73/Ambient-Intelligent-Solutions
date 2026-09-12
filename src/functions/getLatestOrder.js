@@ -3,15 +3,16 @@ const { app } = require("@azure/functions");
 app.http("getLatestOrder", {
   methods: ["GET"],
   authLevel: "anonymous",
-  handler: async () => {
+  handler: async (req, context) => {
+    context.log("GET /getLatestOrder called");
+
+    // Example response — replace with your real logic
     return {
+      status: 200,
       jsonBody: {
-        success: true,
-        latestOrder: {
-          id: "12345",
-          item: "Example Item",
-          timestamp: new Date().toISOString()
-        }
+        orderId: "12345",
+        status: "Processing",
+        timestamp: new Date().toISOString()
       }
     };
   }
