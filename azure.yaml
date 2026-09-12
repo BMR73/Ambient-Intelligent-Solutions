@@ -1,6 +1,5 @@
-# azure.yaml
-services:
-  api:
-    project: .
-    language: js
-    host: function
+# Azure Functions configuration
+functionApp:
+  runtime: node
+  platform: windows
+  version: 4
