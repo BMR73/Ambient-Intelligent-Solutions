@@ -1,0 +1,13 @@
+// package.json
+{
+  "name": "ambient-intelligent-solutions",
+  "version": "1.0.0",
+  "description": "Ambient Intelligent Solutions MVP API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0"
+  }
+}
