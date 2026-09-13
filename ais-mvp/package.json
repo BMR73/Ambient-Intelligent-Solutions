@@ -1,7 +1,7 @@
 {
   "name": "ambient-intelligent-solutions",
   "version": "1.0.0",
-  "description": "AIS MVP server for receiving orders and displaying them to the chef.",
+  "description": "AIS MVP server with JSON file storage.",
   "main": "server.js",
   "type": "module",
   "scripts": {
