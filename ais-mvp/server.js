@@ -1,37 +1,64 @@
-// AIS MVP Server
+// AIS MVP Server with JSON File Storage
 // Ambient Intelligent Solutions
-// This server receives JSON orders and serves a chef display webpage.
 
 import express from "express";
 import bodyParser from "body-parser";
+import fs from "fs";
 
 const app = express();
-
-// Parse JSON bodies
 app.use(bodyParser.json());
-
-// Serve static files from the /public directory
 app.use(express.static("public"));
 
-// Store the latest order in memory
-let currentOrder = {};
+// Ensure orders.json exists
+const ORDERS_FILE = "orders.json";
 
-// Endpoint to receive an order (POST from ElevenLabs → your parser)
+if (!fs.existsSync(ORDERS_FILE)) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2));
+}
+
+// Helper: read all orders
+function readOrders() {
+  const data = fs.readFileSync(ORDERS_FILE, "utf8");
+  return JSON.parse(data);
+}
+
+// Helper: write all orders
+function writeOrders(orders) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
+}
+
+// POST /api/order — add a new order
 app.post("/api/order", (req, res) => {
-  currentOrder = req.body;
-  console.log("Received order:", currentOrder);
-  res.json({ success: true });
+  const orders = readOrders();
+  const newOrder = {
+    id: orders.length + 1,
+    timestamp: new Date().toISOString(),
+    ...req.body
+  };
+
+  orders.push(newOrder);
+  writeOrders(orders);
+
+  console.log("Received order:", newOrder);
+  res.json({ success: true, order: newOrder });
 });
 
-// Endpoint for the chef UI to fetch the latest order
+// GET /api/order/latest — return the most recent order
 app.get("/api/order/latest", (req, res) => {
-  res.json(currentOrder);
+  const orders = readOrders();
+  const latest = orders.length > 0 ? orders[orders.length - 1] : {};
+  res.json(latest);
+});
+
+// GET /api/orders — return all stored orders
+app.get("/api/orders", (req, res) => {
+  const orders = readOrders();
+  res.json(orders);
 });
 
 // Render provides PORT automatically
 const PORT = process.env.PORT || 3000;
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`AIS MVP server running on port ${PORT}`);
 });
