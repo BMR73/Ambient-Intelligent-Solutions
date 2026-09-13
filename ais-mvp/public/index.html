@@ -2,29 +2,28 @@
 <html>
 <head>
   <title>AIS Chef Display</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f5f5f5;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    pre {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      font-size: 18px;
-      border: 1px solid #ccc;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Chef Order Display</h1>
-  <pre id="order">Waiting for orders...</pre>
+  <header>
+    <h1>AIS Chef Order Dashboard</h1>
+    <p class="subtitle">Ambient Intelligent Solutions</p>
+  </header>
+
+  <section class="latest-order-section">
+    <h2>Latest Order</h2>
+    <div id="latest-order" class="order-card empty">
+      Waiting for orders...
+    </div>
+  </section>
+
+  <section class="history-section">
+    <h2>Order History</h2>
+    <div id="order-history" class="history-list">
+      <p class="empty-history">No orders yet.</p>
+    </div>
+  </section>
 
   <script src="script.js"></script>
 </body>
 </html>
-
