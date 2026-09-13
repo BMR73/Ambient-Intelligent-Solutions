@@ -1,5 +1,0 @@
-# Azure Functions configuration
-functionApp:
-  runtime: node
-  platform: windows
-  version: 4
