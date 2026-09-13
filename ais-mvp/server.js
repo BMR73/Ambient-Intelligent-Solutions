@@ -30,10 +30,21 @@ function writeOrders(orders) {
 // POST /api/order — add a new order
 app.post("/api/order", (req, res) => {
   const orders = readOrders();
+
+  // ElevenLabs sends: { order_json: "..." }
+  let parsed;
+  if (typeof req.body.order_json === "string") {
+    parsed = JSON.parse(req.body.order_json);
+  } else {
+    parsed = req.body;
+  }
+
   const newOrder = {
     id: orders.length + 1,
     timestamp: new Date().toISOString(),
-    ...req.body
+    table: parsed.table,
+    order: parsed.order,
+    dietary: parsed.dietary
   };
 
   orders.push(newOrder);
