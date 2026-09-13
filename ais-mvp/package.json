@@ -1,8 +1,9 @@
 {
-  "name": "ais-mvp",
+  "name": "ambient-intelligent-solutions",
   "version": "1.0.0",
-  "description": "Ambient Intelligent Solutions MVP server",
+  "description": "AIS MVP server for receiving orders and displaying them to the chef.",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
@@ -11,4 +12,3 @@
     "body-parser": "^1.20.2"
   }
 }
-
