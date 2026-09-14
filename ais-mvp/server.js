@@ -1,69 +1,75 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const path = require("path");
+// AIS MVP Server
+// Ambient Intelligent Solutions
+
+import express from "express";
+import bodyParser from "body-parser";
+import fs from "fs";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
-let currentOrder = null;
+// JSON file to store orders
+const ORDERS_FILE = "orders.json";
 
-// Convert structured JSON into kitchen-friendly text
-function toKitchenLanguage(order) {
-  if (!order || !order.items || !Array.isArray(order.items)) return [];
-
-  return order.items.map(item => {
-    let verb = "Prep";
-    if (item.course === "entree") verb = "Fire";
-    else if (item.course === "appetizer") verb = "Start";
-    else if (item.course === "drink") verb = "Drink for";
-
-    const base = `${verb} table ${order.table} — ${item.name}.`;
-
-    const mods = item.modifiers?.length
-      ? item.modifiers.map(m => `${m}.`).join(" ")
-      : "";
-
-    const dietary = item.dietary?.length
-      ? `Allergy alert: ${item.dietary.join(", ")}.`
-      : "";
-
-    return `${base} ${mods} ${dietary}`.trim();
-  });
+// Ensure orders.json exists
+if (!fs.existsSync(ORDERS_FILE)) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2));
 }
 
-// Receive order from ElevenLabs
+// Helper: read all orders
+function readOrders() {
+  const data = fs.readFileSync(ORDERS_FILE, "utf8");
+  return JSON.parse(data);
+}
+
+// Helper: write all orders
+function writeOrders(orders) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
+}
+
+// POST /api/order — receives order_json STRING from ElevenLabs webhook
 app.post("/api/order", (req, res) => {
-  const incomingOrder = req.body;
+  try {
+    // ⭐ FIX: Parse the JSON string sent by ElevenLabs
+    const incomingOrder = JSON.parse(req.body.order_json);
 
-  const kitchenText = toKitchenLanguage(incomingOrder);
+    const orders = readOrders();
 
-  currentOrder = {
-    ...incomingOrder,
-    kitchen_text: kitchenText,
-    received_at: new Date().toISOString()
-  };
+    const newOrder = {
+      id: orders.length + 1,
+      timestamp: new Date().toISOString(),
+      ...incomingOrder
+    };
 
-  console.log("Received order:", JSON.stringify(currentOrder, null, 2));
+    orders.push(newOrder);
+    writeOrders(orders);
 
-  res.json({ success: true });
-});
+    console.log("Received order:", newOrder);
+    res.json({ success: true, order: newOrder });
 
-// Serve latest order
-app.get("/api/order/latest", (req, res) => {
-  if (!currentOrder) {
-    return res.json({ kitchen_text: [], received_at: null });
+  } catch (err) {
+    console.error("Failed to parse order_json:", err);
+    res.status(400).json({ success: false, error: "Invalid JSON" });
   }
-  res.json(currentOrder);
 });
 
-// Serve chef page
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// GET /api/order/latest — return the most recent order
+app.get("/api/order/latest", (req, res) => {
+  const orders = readOrders();
+  const latest = orders.length > 0 ? orders[orders.length - 1] : {};
+  res.json(latest);
 });
+
+// GET /api/orders — return all stored orders
+app.get("/api/orders", (req, res) => {
+  const orders = readOrders();
+  res.json(orders);
+});
+
+// Render provides PORT automatically
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Chef UI server running on port ${PORT}`);
+  console.log(`AIS MVP server running on port ${PORT}`);
 });
