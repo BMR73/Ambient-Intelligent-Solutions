@@ -1,75 +1,73 @@
-// AIS MVP Server with JSON File Storage
-// Ambient Intelligent Solutions
-
-import express from "express";
-import bodyParser from "body-parser";
-import fs from "fs";
+const express = require("express");
+const bodyParser = require("body-parser");
+const path = require("path");
 
 const app = express();
-app.use(bodyParser.json());
-app.use(express.static("public"));
-
-// Ensure orders.json exists
-const ORDERS_FILE = "orders.json";
-
-if (!fs.existsSync(ORDERS_FILE)) {
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2));
-}
-
-// Helper: read all orders
-function readOrders() {
-  const data = fs.readFileSync(ORDERS_FILE, "utf8");
-  return JSON.parse(data);
-}
-
-// Helper: write all orders
-function writeOrders(orders) {
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
-}
-
-// POST /api/order — add a new order
-app.post("/api/order", (req, res) => {
-  const orders = readOrders();
-
-  // ElevenLabs sends: { order_json: "..." }
-  let parsed;
-  if (typeof req.body.order_json === "string") {
-    parsed = JSON.parse(req.body.order_json);
-  } else {
-    parsed = req.body;
-  }
-
-  const newOrder = {
-    id: orders.length + 1,
-    timestamp: new Date().toISOString(),
-    table: parsed.table,
-    order: parsed.order,
-    dietary: parsed.dietary
-  };
-
-  orders.push(newOrder);
-  writeOrders(orders);
-
-  console.log("Received order:", newOrder);
-  res.json({ success: true, order: newOrder });
-});
-
-// GET /api/order/latest — return the most recent order
-app.get("/api/order/latest", (req, res) => {
-  const orders = readOrders();
-  const latest = orders.length > 0 ? orders[orders.length - 1] : {};
-  res.json(latest);
-});
-
-// GET /api/orders — return all stored orders
-app.get("/api/orders", (req, res) => {
-  const orders = readOrders();
-  res.json(orders);
-});
-
-// Render provides PORT automatically
 const PORT = process.env.PORT || 3000;
 
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public")));
+
+let currentOrder = null;
+
+// Convert structured JSON into kitchen-friendly text
+function toKitchenLanguage(order) {
+  if (!order || !order.items || !Array.isArray(order.items)) return [];
+
+  return order.items.map(item => {
+    // Determine the correct kitchen verb
+    let verb = "Prep";
+    if (item.course === "entree") verb = "Fire";
+    else if (item.course === "appetizer") verb = "Start";
+    else if (item.course === "drink") verb = "Drink for";
+
+    // Base command
+    const base = `${verb} table ${order.table} — ${item.name}.`;
+
+    // Modifiers
+    const mods = item.modifiers && item.modifiers.length > 0
+      ? item.modifiers.map(m => `${m}.`).join(" ")
+      : "";
+
+    // Dietary restrictions
+    const dietary = item.dietary && item.dietary.length > 0
+      ? `Allergy alert: ${item.dietary.join(", ")}.`
+      : "";
+
+    return `${base} ${mods} ${dietary}`.trim();
+  });
+}
+
+// Receive order from ElevenLabs / AIS
+app.post("/api/order", (req, res) => {
+  const incomingOrder = req.body;
+
+  const kitchenText = toKitchenLanguage(incomingOrder);
+
+  currentOrder = {
+    ...incomingOrder,
+    kitchen_text: kitchenText,
+    received_at: new Date().toISOString()
+  };
+
+  console.log("Received order:", JSON.stringify(currentOrder, null, 2));
+
+  res.json({ success: true });
+});
+
+// Serve latest order to chef UI
+app.get("/api/order/latest", (req, res) => {
+  if (!currentOrder) {
+    return res.json({ kitchen_text: [], received_at: null });
+  }
+  res.json(currentOrder);
+});
+
+// Serve chef page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 app.listen(PORT, () => {
-  console.log(`AIS MVP server running on port ${PORT}`);
+  console.log(`Chef UI server running on port ${PORT}`);
 });
