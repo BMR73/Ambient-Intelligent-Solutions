@@ -28,17 +28,45 @@ function writeOrders(orders) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
 }
 
+// Kitchen language generator
+function toKitchenLanguage(order) {
+  if (!order || !order.items || !Array.isArray(order.items)) return [];
+
+  return order.items.map(item => {
+    let verb = "Prep";
+    if (item.course === "entree") verb = "Fire";
+    else if (item.course === "appetizer") verb = "Start";
+    else if (item.course === "drink") verb = "Drink for";
+
+    const base = `${verb} table ${order.table} — ${item.name}.`;
+
+    const mods = item.modifiers?.length
+      ? item.modifiers.map(m => `${m}.`).join(" ")
+      : "";
+
+    const dietary = item.dietary?.length
+      ? `Allergy alert: ${item.dietary.join(", ")}.`
+      : "";
+
+    return `${base} ${mods} ${dietary}`.trim();
+  });
+}
+
 // POST /api/order — receives order_json STRING from ElevenLabs webhook
 app.post("/api/order", (req, res) => {
   try {
-    // ⭐ FIX: Parse the JSON string sent by ElevenLabs
+    // Parse JSON string sent by ElevenLabs
     const incomingOrder = JSON.parse(req.body.order_json);
+
+    // Generate kitchen language
+    const kitchenText = toKitchenLanguage(incomingOrder);
 
     const orders = readOrders();
 
     const newOrder = {
       id: orders.length + 1,
-      timestamp: new Date().toISOString(),
+      received_at: new Date().toISOString(),
+      kitchen_text: kitchenText,
       ...incomingOrder
     };
 
