@@ -1,28 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>AIS Chef Display</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>AIS Chef View</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>AIS Chef Order Dashboard</h1>
-    <p class="subtitle">Ambient Intelligent Solutions</p>
+    <h1>AIS Chef Display</h1>
+    <p>Incoming orders from waitstaff via AIS Agent</p>
   </header>
 
-  <section class="latest-order-section">
-    <h2>Latest Order</h2>
-    <div id="latest-order" class="order-card empty">
-      Waiting for orders...
-    </div>
-  </section>
+  <main>
+    <section id="order-section">
+      <h2>Current Order</h2>
+      <div id="meta">
+        <p id="waitstaff"></p>
+        <p id="table"></p>
+        <p id="timestamp"></p>
+      </div>
+      <div id="order"></div>
+    </section>
+  </main>
 
-  <section class="history-section">
-    <h2>Order History</h2>
-    <div id="order-history" class="history-list">
-      <p class="empty-history">No orders yet.</p>
-    </div>
-  </section>
+  <footer>
+    <p>Ambient Intelligent Solutions — Kitchen View</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
