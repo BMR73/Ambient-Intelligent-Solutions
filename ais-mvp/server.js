@@ -1,6 +1,3 @@
-// AIS MVP Server
-// Ambient Intelligent Solutions
-
 import express from "express";
 import bodyParser from "body-parser";
 import fs from "fs";
@@ -17,15 +14,13 @@ if (!fs.existsSync(ORDERS_FILE)) {
 }
 
 function readOrders() {
-  const data = fs.readFileSync(ORDERS_FILE, "utf8");
-  return JSON.parse(data);
+  return JSON.parse(fs.readFileSync(ORDERS_FILE, "utf8"));
 }
 
 function writeOrders(orders) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
 }
 
-// Kitchen language generator
 function toKitchenLanguage(order) {
   if (!order || !order.items || !Array.isArray(order.items)) return [];
 
@@ -49,7 +44,6 @@ function toKitchenLanguage(order) {
   });
 }
 
-// POST /api/order — webhook target
 app.post("/api/order", (req, res) => {
   try {
     const incomingOrder = JSON.parse(req.body.order_json);
@@ -67,40 +61,28 @@ app.post("/api/order", (req, res) => {
     orders.push(newOrder);
     writeOrders(orders);
 
-    console.log("Received order:", newOrder);
     res.json({ success: true, order: newOrder });
   } catch (err) {
-    console.error("Failed to parse order_json:", err);
     res.status(400).json({ success: false, error: "Invalid JSON" });
   }
 });
 
-// GET /api/order/latest — most recent order
 app.get("/api/order/latest", (req, res) => {
   const orders = readOrders();
-  const latest = orders.length > 0 ? orders[orders.length - 1] : {};
-  res.json(latest);
+  res.json(orders.length > 0 ? orders[orders.length - 1] : {});
 });
 
-// GET /api/orders — full history
 app.get("/api/orders", (req, res) => {
-  const orders = readOrders();
-  res.json(orders);
+  res.json(readOrders());
 });
 
-// POST /api/order/complete — remove an order by id
 app.post("/api/order/complete", (req, res) => {
   const { id } = req.body;
   const orders = readOrders();
-
   const updated = orders.filter(order => order.id !== Number(id));
   writeOrders(updated);
-
   res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`AIS MVP server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`AIS server running on port ${PORT}`));
