@@ -55,6 +55,7 @@ app.post("/api/order", (req, res) => {
       id: orders.length + 1,
       received_at: new Date().toISOString(),
       kitchen_text: kitchenText,
+      waitstaff_name: incomingOrder.waitstaff_name || null,
       ...incomingOrder
     };
 
