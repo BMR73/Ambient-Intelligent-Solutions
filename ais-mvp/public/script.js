@@ -54,7 +54,13 @@ function renderLatestOrder(order) {
     return;
   }
 
-  waitstaffEl.textContent = `Waitstaff: ${order.waitstaff_id}`;
+  const wsName = order.waitstaff_name;
+  const wsId = order.waitstaff_id;
+
+  waitstaffEl.textContent = wsName
+    ? `Waitstaff: ${wsName} (${wsId})`
+    : `Waitstaff: ${wsId}`;
+
   tableEl.textContent = `Table: ${order.table}`;
   timestampEl.textContent = `Placed: ${timeAgo(order.received_at)}`;
 
@@ -80,11 +86,14 @@ function renderOrderHistory(orders) {
     const wrapper = document.createElement("div");
     wrapper.className = `history-order ${agingClass(order.received_at)}`;
 
+    const wsName = order.waitstaff_name;
+    const wsId = order.waitstaff_id;
+
     wrapper.innerHTML = `
       <div class="history-header">
         <strong>Order #${order.id}</strong>
         <span>Table ${order.table}</span>
-        <span>Waitstaff ${order.waitstaff_id}</span>
+        <span>Waitstaff ${wsName ? `${wsName} (${wsId})` : wsId}</span>
         <span>${timeAgo(order.received_at)}</span>
       </div>
       <ul>
