@@ -8,7 +8,6 @@ app.use(express.static("public"));
 
 const ORDERS_FILE = "orders.json";
 
-// Ensure orders.json exists
 if (!fs.existsSync(ORDERS_FILE)) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2));
 }
