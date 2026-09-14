@@ -1,9 +1,8 @@
 {
   "name": "ambient-intelligent-solutions",
   "version": "1.0.0",
-  "description": "AIS MVP server with JSON file storage.",
+  "description": "AIS Chef UI + Server",
   "main": "server.js",
-  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
