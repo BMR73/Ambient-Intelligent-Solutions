@@ -2,9 +2,19 @@ async function fetchLatestOrder() {
   try {
     const res = await fetch("/api/order/latest");
     const data = await res.json();
-    renderOrder(data);
+    renderLatestOrder(data);
   } catch (err) {
     console.error("Error fetching latest order:", err);
+  }
+}
+
+async function fetchOrderHistory() {
+  try {
+    const res = await fetch("/api/orders");
+    const data = await res.json();
+    renderOrderHistory(data);
+  } catch (err) {
+    console.error("Error fetching order history:", err);
   }
 }
 
@@ -40,7 +50,8 @@ function hasAllergy(line) {
   return line.includes("Allergy alert");
 }
 
-function renderOrder(order) {
+// Latest order renderer
+function renderLatestOrder(order) {
   const orderContainer = document.getElementById("order");
   const waitstaffEl = document.getElementById("waitstaff");
   const tableEl = document.getElementById("table");
@@ -72,5 +83,81 @@ function renderOrder(order) {
   });
 }
 
+// History renderer
+function renderOrderHistory(orders) {
+  const historyEl = document.getElementById("order-history");
+  historyEl.innerHTML = "";
+
+  if (!orders || orders.length === 0) {
+    historyEl.innerHTML = "<p>No previous orders.</p>";
+    return;
+  }
+
+  orders.forEach(order => {
+    const wrapper = document.createElement("div");
+    wrapper.className = `history-order ${agingClass(order.received_at)}`;
+
+    const header = document.createElement("div");
+    header.className = "history-header";
+    header.innerHTML = `
+      <strong>Order #${order.id}</strong>
+      <span>Table ${order.table}</span>
+      <span>Waitstaff ${order.waitstaff_id}</span>
+      <span>${timeAgo(order.received_at)}</span>
+    `;
+
+    const list = document.createElement("ul");
+    order.kitchen_text.forEach(line => {
+      const li = document.createElement("li");
+      li.textContent = line;
+      if (hasAllergy(line)) li.classList.add("allergy");
+      list.appendChild(li);
+    });
+
+    const controls = document.createElement("div");
+    controls.className = "history-controls";
+    const label = document.createElement("label");
+    label.innerHTML = `
+      <input type="checkbox" data-order-id="${order.id}" class="complete-checkbox">
+      Complete
+    `;
+    controls.appendChild(label);
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(list);
+    wrapper.appendChild(controls);
+
+    historyEl.appendChild(wrapper);
+  });
+
+  document.querySelectorAll(".complete-checkbox").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const id = cb.getAttribute("data-order-id");
+      if (cb.checked) {
+        completeOrder(id);
+      }
+    });
+  });
+}
+
+async function completeOrder(id) {
+  try {
+    await fetch("/api/order/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+
+    // Refresh both views
+    fetchLatestOrder();
+    fetchOrderHistory();
+  } catch (err) {
+    console.error("Error completing order:", err);
+  }
+}
+
+// Polling
 setInterval(fetchLatestOrder, 3000);
+setInterval(fetchOrderHistory, 3000);
 fetchLatestOrder();
+fetchOrderHistory();
