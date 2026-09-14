@@ -9,7 +9,6 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-// JSON file to store orders
 const ORDERS_FILE = "orders.json";
 
 // Ensure orders.json exists
@@ -17,13 +16,11 @@ if (!fs.existsSync(ORDERS_FILE)) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2));
 }
 
-// Helper: read all orders
 function readOrders() {
   const data = fs.readFileSync(ORDERS_FILE, "utf8");
   return JSON.parse(data);
 }
 
-// Helper: write all orders
 function writeOrders(orders) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
 }
@@ -52,13 +49,10 @@ function toKitchenLanguage(order) {
   });
 }
 
-// POST /api/order — receives order_json STRING from ElevenLabs webhook
+// POST /api/order — webhook target
 app.post("/api/order", (req, res) => {
   try {
-    // Parse JSON string sent by ElevenLabs
     const incomingOrder = JSON.parse(req.body.order_json);
-
-    // Generate kitchen language
     const kitchenText = toKitchenLanguage(incomingOrder);
 
     const orders = readOrders();
@@ -75,27 +69,36 @@ app.post("/api/order", (req, res) => {
 
     console.log("Received order:", newOrder);
     res.json({ success: true, order: newOrder });
-
   } catch (err) {
     console.error("Failed to parse order_json:", err);
     res.status(400).json({ success: false, error: "Invalid JSON" });
   }
 });
 
-// GET /api/order/latest — return the most recent order
+// GET /api/order/latest — most recent order
 app.get("/api/order/latest", (req, res) => {
   const orders = readOrders();
   const latest = orders.length > 0 ? orders[orders.length - 1] : {};
   res.json(latest);
 });
 
-// GET /api/orders — return all stored orders
+// GET /api/orders — full history
 app.get("/api/orders", (req, res) => {
   const orders = readOrders();
   res.json(orders);
 });
 
-// Render provides PORT automatically
+// POST /api/order/complete — remove an order by id
+app.post("/api/order/complete", (req, res) => {
+  const { id } = req.body;
+  const orders = readOrders();
+
+  const updated = orders.filter(order => order.id !== Number(id));
+  writeOrders(updated);
+
+  res.json({ success: true });
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
