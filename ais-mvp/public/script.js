@@ -1,62 +1,56 @@
 async function fetchLatestOrder() {
-  const res = await fetch("/api/order/latest");
-  return await res.json();
+  try {
+    const res = await fetch("/api/order/latest");
+    const data = await res.json();
+    renderOrder(data);
+  } catch (err) {
+    console.error("Error fetching latest order:", err);
+  }
 }
 
-async function fetchOrderHistory() {
-  const res = await fetch("/api/orders");
-  return await res.json();
+function classifyVerb(line) {
+  if (line.startsWith("Fire")) return "fire";
+  if (line.startsWith("Start")) return "start";
+  if (line.startsWith("Drink for")) return "drink";
+  return "";
 }
 
-function renderLatestOrder(order) {
-  const container = document.getElementById("latest-order");
+function hasAllergy(line) {
+  return line.includes("Allergy alert");
+}
 
-  if (!order || Object.keys(order).length === 0) {
-    container.classList.add("empty");
-    container.innerText = "Waiting for orders...";
+function renderOrder(order) {
+  const orderContainer = document.getElementById("order");
+  const waitstaffEl = document.getElementById("waitstaff");
+  const tableEl = document.getElementById("table");
+  const timestampEl = document.getElementById("timestamp");
+
+  orderContainer.innerHTML = "";
+
+  if (!order || !order.kitchen_text || order.kitchen_text.length === 0) {
+    waitstaffEl.textContent = "Waitstaff: —";
+    tableEl.textContent = "Table: —";
+    timestampEl.textContent = "Received: —";
+    orderContainer.innerHTML = "<p>No orders yet.</p>";
     return;
   }
 
-  container.classList.remove("empty");
-  container.innerHTML = `
-    <strong>Order #${order.id}</strong><br>
-    Table: ${order.table}<br>
-    Items: ${order.order.join(", ")}<br>
-    Dietary: ${order.dietary.join(", ")}<br>
-    <span class="timestamp">${order.timestamp}</span>
-  `;
-}
+  waitstaffEl.textContent = `Waitstaff: ${order.waitstaff_id || "Unknown"}`;
+  tableEl.textContent = `Table: ${order.table ?? "Unknown"}`;
+  timestampEl.textContent = `Received: ${order.received_at || "Unknown"}`;
 
-function renderOrderHistory(orders) {
-  const container = document.getElementById("order-history");
-  container.innerHTML = "";
-
-  if (!orders || orders.length === 0) {
-    container.innerHTML = `<p class="empty-history">No orders yet.</p>`;
-    return;
-  }
-
-  orders.forEach(order => {
-    const item = document.createElement("div");
-    item.className = "history-item";
-    item.innerHTML = `
-      <strong>Order #${order.id}</strong><br>
-      Table: ${order.table}<br>
-      Items: ${order.order.join(", ")}<br>
-      Dietary: ${order.dietary.join(", ")}<br>
-      <span class="timestamp">${order.timestamp}</span>
-    `;
-    container.appendChild(item);
+  order.kitchen_text.forEach(line => {
+    const div = document.createElement("div");
+    const verbClass = classifyVerb(line);
+    div.className = `order-line ${verbClass}`;
+    if (hasAllergy(line)) {
+      div.classList.add("allergy");
+    }
+    div.textContent = line;
+    orderContainer.appendChild(div);
   });
 }
 
-async function updateUI() {
-  const latest = await fetchLatestOrder();
-  const history = await fetchOrderHistory();
-
-  renderLatestOrder(latest);
-  renderOrderHistory(history);
-}
-
-setInterval(updateUI, 2000);
-updateUI();
+// Poll every few seconds for new orders
+setInterval(fetchLatestOrder, 3000);
+fetchLatestOrder();
