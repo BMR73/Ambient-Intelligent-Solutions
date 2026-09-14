@@ -15,22 +15,18 @@ function toKitchenLanguage(order) {
   if (!order || !order.items || !Array.isArray(order.items)) return [];
 
   return order.items.map(item => {
-    // Determine the correct kitchen verb
     let verb = "Prep";
     if (item.course === "entree") verb = "Fire";
     else if (item.course === "appetizer") verb = "Start";
     else if (item.course === "drink") verb = "Drink for";
 
-    // Base command
     const base = `${verb} table ${order.table} — ${item.name}.`;
 
-    // Modifiers
-    const mods = item.modifiers && item.modifiers.length > 0
+    const mods = item.modifiers?.length
       ? item.modifiers.map(m => `${m}.`).join(" ")
       : "";
 
-    // Dietary restrictions
-    const dietary = item.dietary && item.dietary.length > 0
+    const dietary = item.dietary?.length
       ? `Allergy alert: ${item.dietary.join(", ")}.`
       : "";
 
@@ -38,7 +34,7 @@ function toKitchenLanguage(order) {
   });
 }
 
-// Receive order from ElevenLabs / AIS
+// Receive order from ElevenLabs
 app.post("/api/order", (req, res) => {
   const incomingOrder = req.body;
 
@@ -55,7 +51,7 @@ app.post("/api/order", (req, res) => {
   res.json({ success: true });
 });
 
-// Serve latest order to chef UI
+// Serve latest order
 app.get("/api/order/latest", (req, res) => {
   if (!currentOrder) {
     return res.json({ kitchen_text: [], received_at: null });
