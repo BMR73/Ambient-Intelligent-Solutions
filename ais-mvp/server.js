@@ -38,19 +38,42 @@ app.get("/api/orders", (req, res) => {
 
 // ---------- Create New Order ----------
 app.post("/api/order", (req, res) => {
-  const orders = readOrders();
+  const body = req.body;
+
+  // Accept both "items" and "pending_order_items"
+  const incomingItems = body.items || body.pending_order_items || [];
+
+  // Normalize items into AIS-6.0 format
+  const normalizedItems = incomingItems.map(item => ({
+    name: item.name || null,
+    course: item.course || null,
+    modifiers: Array.isArray(item.modifiers) ? item.modifiers : [],
+    dietary: Array.isArray(item.dietary) ? item.dietary : []
+  }));
+
   const newOrder = {
     id: Date.now(),
-    waitstaff_id: req.body.waitstaff_id || null,
-    waitstaff_name: req.body.waitstaff_name || null,
-    table: req.body.table || null,
-    items: req.body.items || [],
+
+    // Accept numbers OR strings, convert safely
+    waitstaff_id: body.waitstaff_id !== undefined
+      ? Number(body.waitstaff_id)
+      : null,
+
+    waitstaff_name: body.waitstaff_name || null,
+
+    table: body.table !== undefined
+      ? Number(body.table)
+      : null,
+
+    items: normalizedItems,
+
     ready: false,
     ready_at: null,
     complete: false,
     created_at: new Date().toISOString()
   };
 
+  const orders = readOrders();
   orders.push(newOrder);
   writeOrders(orders);
 
