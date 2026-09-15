@@ -40,6 +40,7 @@ function hasAllergy(line) {
 
 function renderLatestOrder(order) {
   const orderContainer = document.getElementById("order");
+  const orderNumberEl = document.getElementById("order-number");
   const waitstaffEl = document.getElementById("waitstaff");
   const tableEl = document.getElementById("table");
   const timestampEl = document.getElementById("timestamp");
@@ -47,6 +48,7 @@ function renderLatestOrder(order) {
   orderContainer.innerHTML = "";
 
   if (!order || !order.kitchen_text || order.kitchen_text.length === 0) {
+    orderNumberEl.textContent = "Order #: —";
     waitstaffEl.textContent = "Waitstaff: —";
     tableEl.textContent = "Table: —";
     timestampEl.textContent = "Placed: —";
@@ -54,14 +56,18 @@ function renderLatestOrder(order) {
     return;
   }
 
+  orderNumberEl.textContent = `Order #: ${order.order_number || "INCOMPLETE"}`;
+
   const wsName = order.waitstaff_name;
   const wsId = order.waitstaff_id;
 
   waitstaffEl.textContent = wsName
-    ? `Waitstaff: ${wsName} (${wsId})`
-    : `Waitstaff: ${wsId}`;
+    ? `Waitstaff: ${wsName} (${wsId || "?"})`
+    : wsId
+      ? `Waitstaff: ${wsId}`
+      : "Waitstaff: —";
 
-  tableEl.textContent = `Table: ${order.table}`;
+  tableEl.textContent = `Table: ${order.table || "—"}`;
   timestampEl.textContent = `Placed: ${timeAgo(order.received_at)}`;
 
   order.kitchen_text.forEach(line => {
@@ -91,9 +97,9 @@ function renderOrderHistory(orders) {
 
     wrapper.innerHTML = `
       <div class="history-header">
-        <strong>Order #${order.id}</strong>
-        <span>Table ${order.table}</span>
-        <span>Waitstaff ${wsName ? `${wsName} (${wsId})` : wsId}</span>
+        <strong>${order.order_number || "INCOMPLETE"}</strong>
+        <span>Table ${order.table || "—"}</span>
+        <span>Waitstaff ${wsName ? `${wsName} (${wsId || "?"})` : (wsId || "—")}</span>
         <span>${timeAgo(order.received_at)}</span>
       </div>
       <ul>
