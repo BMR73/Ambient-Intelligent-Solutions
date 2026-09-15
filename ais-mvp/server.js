@@ -1,131 +1,119 @@
-import express from "express";
-import bodyParser from "body-parser";
-import fs from "fs";
+/**
+ * KDS (Kitchen Display System) - Server
+ * Express + SQLite backend with Ready/Complete order lifecycle
+ */
+
+const express = require('express');
+const Database = require('better-sqlite3');
+const path = require('path');
+const cors = require('cors');
 
 const app = express();
-app.use(bodyParser.json());
-app.use(express.static("public"));
-
-const ORDERS_FILE = "orders.json";
-
-if (!fs.existsSync(ORDERS_FILE)) {
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2));
-}
-
-function readOrders() {
-  return JSON.parse(fs.readFileSync(ORDERS_FILE, "utf8"));
-}
-
-function writeOrders(orders) {
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
-}
-
-function toKitchenLanguage(order) {
-  if (!order || !order.items || !Array.isArray(order.items)) return [];
-
-  return order.items.map(item => {
-    let verb = "Prep";
-    if (item.course === "entree") verb = "Fire";
-    else if (item.course === "appetizer") verb = "Start";
-    else if (item.course === "drink") verb = "Drink for";
-
-    const base = `${verb} table ${order.table || "unknown"} — ${item.name}.`;
-
-    const mods = item.modifiers?.length
-      ? item.modifiers.map(m => `${m}.`).join(" ")
-      : "";
-
-    const dietary = item.dietary?.length
-      ? `Allergy alert: ${item.dietary.join(", ")}.`
-      : "";
-
-    return `${base} ${mods} ${dietary}`.trim();
-  });
-}
-
-function generateOrderNumber(order) {
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const time = `${hours}${minutes}`;
-
-  const tbl = order.table ? String(order.table) : null;
-  const emp = order.waitstaff_id ? String(order.waitstaff_id) : null;
-
-  if (!tbl || !emp) {
-    return "INCOMPLETE";
-  }
-
-  return `${tbl} | ${emp} | ${day} | ${time}`;
-}
-
-app.post("/api/order", (req, res) => {
-  try {
-    const incomingOrder = JSON.parse(req.body.order_json);
-    const kitchenText = toKitchenLanguage(incomingOrder);
-
-    const orders = readOrders();
-
-    const newOrder = {
-      id: orders.length + 1,
-      received_at: new Date().toISOString(),
-      kitchen_text: kitchenText,
-      waitstaff_name: incomingOrder.waitstaff_name || null,
-      waitstaff_id: incomingOrder.waitstaff_id || null,
-      table: incomingOrder.table || null,
-      items: incomingOrder.items || [],
-      order_number: generateOrderNumber(incomingOrder),
-      incomplete: !incomingOrder.waitstaff_id || !incomingOrder.table
-    };
-
-    orders.push(newOrder);
-    writeOrders(orders);
-
-    res.json({ success: true, order: newOrder });
-  } catch (err) {
-    res.status(400).json({ success: false, error: "Invalid JSON" });
-  }
-});
-
-app.get("/api/order/latest", (req, res) => {
-  const orders = readOrders();
-  res.json(orders.length > 0 ? orders[orders.length - 1] : {});
-});
-
-app.get("/api/orders", (req, res) => {
-  res.json(readOrders());
-});
-
-app.post("/api/order/complete", (req, res) => {
-  const { id } = req.body;
-  const orders = readOrders();
-  const updated = orders.filter(order => order.id !== Number(id));
-  writeOrders(updated);
-  res.json({ success: true });
-});
-
-app.post("/api/order/update-metadata", (req, res) => {
-  const { id, waitstaff_id, waitstaff_name, table } = req.body;
-  const orders = readOrders();
-  const idx = orders.findIndex(o => o.id === Number(id));
-  if (idx === -1) {
-    return res.status(404).json({ success: false, error: "Order not found" });
-  }
-
-  const order = orders[idx];
-  if (waitstaff_id) order.waitstaff_id = waitstaff_id;
-  if (waitstaff_name) order.waitstaff_name = waitstaff_name;
-  if (table) order.table = table;
-
-  order.order_number = generateOrderNumber(order);
-  order.incomplete = !order.waitstaff_id || !order.table;
-
-  orders[idx] = order;
-  writeOrders(orders);
-
-  res.json({ success: true, order });
-});
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`AIS server running on port ${PORT}`));
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'kds.db');
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── Database Setup ───────────────────────────────────────────────────────────
+const db = new Database(DB_PATH);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS orders (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_number TEXT    NOT NULL,
+    items        TEXT    NOT NULL,
+    notes        TEXT    DEFAULT '',
+    status       TEXT    NOT NULL DEFAULT 'pending',
+    ready        INTEGER NOT NULL DEFAULT 0,
+    ready_at     TEXT    DEFAULT NULL,
+    completed_at TEXT    DEFAULT NULL,
+    created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
+// Idempotent migrations for existing databases
+try { db.exec(`ALTER TABLE orders ADD COLUMN ready     INTEGER NOT NULL DEFAULT 0`); } catch (_) {}
+try { db.exec(`ALTER TABLE orders ADD COLUMN ready_at  TEXT    DEFAULT NULL`);       } catch (_) {}
+try { db.exec(`ALTER TABLE orders ADD COLUMN status    TEXT    NOT NULL DEFAULT 'pending'`); } catch (_) {}
+try { db.exec(`ALTER TABLE orders ADD COLUMN completed_at TEXT DEFAULT NULL`);       } catch (_) {}
+
+// ─── Prepared Statements ──────────────────────────────────────────────────────
+const stmts = {
+  getAllActive: db.prepare(`SELECT * FROM orders WHERE status != 'complete' ORDER BY created_at ASC`),
+  getAll:       db.prepare(`SELECT * FROM orders ORDER BY created_at DESC`),
+  getById:      db.prepare(`SELECT * FROM orders WHERE id = ?`),
+  insert:       db.prepare(`INSERT INTO orders (table_number, items, notes) VALUES (@table_number, @items, @notes)`),
+  setReady:     db.prepare(`UPDATE orders SET ready = @ready, ready_at = @ready_at, status = @status WHERE id = @id`),
+  setComplete:  db.prepare(`UPDATE orders SET status = 'complete', completed_at = datetime('now') WHERE id = ?`),
+  deleteOrder:  db.prepare(`DELETE FROM orders WHERE id = ?`),
+};
+
+function parseOrder(row) {
+  if (!row) return null;
+  return { ...row, items: JSON.parse(row.items), ready: row.ready === 1 };
+}
+
+function nowISO() { return new Date().toISOString(); }
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
+// GET /api/orders  — active orders; ?all=true for all including completed
+app.get('/api/orders', (req, res) => {
+  try {
+    const rows = req.query.all === 'true' ? stmts.getAll.all() : stmts.getAllActive.all();
+    res.json(rows.map(parseOrder));
+  } catch (err) { res.status(500).json({ error: 'Failed to fetch orders.' }); }
+});
+
+// GET /api/orders/:id
+app.get('/api/orders/:id', (req, res) => {
+  try {
+    const row = stmts.getById.get(req.params.id);
+    if (!row) return res.status(404).json({ error: 'Order not found.' });
+    res.json(parseOrder(row));
+  } catch (err) { res.status(500).json({ error: 'Failed to fetch order.' }); }
+});
+
+// POST /api/orders  — create order
+// Body: { table_number, items: string[], notes? }
+app.post('/api/orders', (req, res) => {
+  try {
+    const { table_number, items, notes = '' } = req.body;
+    if (!table_number || !Array.isArray(items) || items.length === 0)
+      return res.status(400).json({ error: 'table_number and a non-empty items array are required.' });
+
+    const info = stmts.insert.run({
+      table_number: String(table_number).trim(),
+      items: JSON.stringify(items.map(String)),
+      notes: String(notes).trim(),
+    });
+    res.status(201).json(parseOrder(stmts.getById.get(info.lastInsertRowid)));
+  } catch (err) { res.status(500).json({ error: 'Failed to create order.' }); }
+});
+
+// POST /api/order/ready  — toggle ready state
+// Body: { id: number, ready: boolean }
+// ready=true  → status='ready',   sets ready_at timestamp
+// ready=false → status='pending', clears ready_at
+app.post('/api/order/ready', (req, res) => {
+  try {
+    const { id, ready } = req.body;
+    if (id === undefined || ready === undefined)
+      return res.status(400).json({ error: 'id and ready fields are required.' });
+
+    const existing = stmts.getById.get(Number(id));
+    if (!existing)              return res.status(404).json({ error: 'Order not found.' });
+    if (existing.status === 'complete') return res.status(409).json({ error: 'Cannot modify a completed order.' });
+
+    const isReady = Boolean(ready);
+    stmts.setReady.run({
+      id:       Number(id),
+      ready:    isReady ? 1 : 0,
+      ready_at: isReady ? nowISO() : null,
+      status:   isReady ? 'ready' : 'pending',
+    });
+
+    res.json(parseOrder(stmts.getById.get(Number(id))));
+  } catch
