@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -10,6 +11,7 @@ app.use(express.static(path.join(__dirname, "public")));
 const ORDERS_FILE = path.join(__dirname, "orders.json");
 
 // ---------- Helpers ----------
+
 function readOrders() {
   try {
     const data = fs.readFileSync(ORDERS_FILE, "utf8");
@@ -24,6 +26,7 @@ function writeOrders(data) {
 }
 
 // ---------- Get Latest Order ----------
+
 app.get("/api/order/latest", (req, res) => {
   const orders = readOrders();
   if (orders.length === 0) return res.json({});
@@ -31,16 +34,26 @@ app.get("/api/order/latest", (req, res) => {
 });
 
 // ---------- Get All Orders ----------
+
 app.get("/api/orders", (req, res) => {
   const orders = readOrders();
   res.json(orders);
 });
 
-// ---------- Create New Order ----------
+// ---------- Create New Order (AIS-6.0) ----------
+// Accepts payloads from ElevenLabs function:
+// {
+//   "waitstaff_id": <number or string>,
+//   "waitstaff_name": "<string>",
+//   "table": <number or string>,
+//   "pending_order_items": [
+//     { "name": "<menu item>", "course": "<entree|appetizer|drink>", "modifiers": [], "dietary": [] }
+//   ]
+// }
 app.post("/api/order", (req, res) => {
   const body = req.body;
 
-  // Accept both "items" and "pending_order_items"
+  // Accept both "items" and "pending_order_items" from AIS-6.0
   const incomingItems = body.items || body.pending_order_items || [];
 
   // Normalize items into AIS-6.0 format
@@ -53,20 +66,14 @@ app.post("/api/order", (req, res) => {
 
   const newOrder = {
     id: Date.now(),
-
-    // Accept numbers OR strings, convert safely
     waitstaff_id: body.waitstaff_id !== undefined
       ? Number(body.waitstaff_id)
       : null,
-
     waitstaff_name: body.waitstaff_name || null,
-
     table: body.table !== undefined
       ? Number(body.table)
       : null,
-
     items: normalizedItems,
-
     ready: false,
     ready_at: null,
     complete: false,
@@ -81,27 +88,33 @@ app.post("/api/order", (req, res) => {
 });
 
 // ---------- Toggle Ready ----------
+
 app.post("/api/order/ready", (req, res) => {
   const { id } = req.body;
   const orders = readOrders();
 
+  let updatedOrder = null;
+
   const updated = orders.map(order => {
     if (order.id === Number(id)) {
       const nowReady = !order.ready;
-      return {
+      updatedOrder = {
         ...order,
         ready: nowReady,
         ready_at: nowReady ? new Date().toISOString() : null
       };
+      return updatedOrder;
     }
     return order;
   });
 
   writeOrders(updated);
-  res.json({ success: true });
+
+  res.json(updatedOrder || { success: false });
 });
 
 // ---------- Mark Complete ----------
+
 app.post("/api/order/complete", (req, res) => {
   const { id } = req.body;
   const orders = readOrders();
@@ -113,10 +126,12 @@ app.post("/api/order/complete", (req, res) => {
   );
 
   writeOrders(updated);
+
   res.json({ success: true });
 });
 
 // ---------- Start Server ----------
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
