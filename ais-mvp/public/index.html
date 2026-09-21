@@ -168,6 +168,61 @@
     .order-card.status-ready .status-tag  { background: #2ecc71; }
     .order-card.status-prep  .status-tag  { background: #f39c12; }
 
+    /* ── Complete Button ── */
+    .complete-btn {
+      display: block;
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.55rem 0;
+      background: #2ecc71;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: background 0.2s;
+    }
+    .complete-btn:hover { background: #27ae60; }
+
+    /* ── Completed Order Card ── */
+    .order-card.completed {
+      opacity: 0.65;
+      border-left-color: #95a5a6;
+      background: #f0f0f0;
+    }
+
+    /* ── Completed Orders Section ── */
+    .completed-section {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 2rem;
+    }
+
+    .completed-section .section-title {
+      border-bottom-color: #95a5a6;
+      color: #555;
+    }
+
+    #completed-orders {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      min-height: 60px;
+    }
+
+    #completed-orders:empty::before {
+      content: "No completed orders yet.";
+      color: #bbb;
+      font-style: italic;
+      grid-column: 1 / -1;
+      padding: 1.5rem 0;
+      text-align: center;
+    }
+
     /* ── Footer ── */
     footer {
       background: #1a1a2e;
@@ -229,6 +284,12 @@
         ╚══════════════════════════════════════╝
       -->
       <div id="orders"></div>
+    </div>
+
+    <!-- Completed Orders Section -->
+    <div class="completed-section">
+      <span class="section-title">✓ Completed Orders</span>
+      <div id="completed-orders"></div>
     </div>
 
   </main>
