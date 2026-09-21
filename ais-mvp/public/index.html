@@ -177,11 +177,8 @@
       font-size: 0.8rem;
     }
 
-    /* ── ElevenLabs Convai Widget Container ── */
-    .convai-wrapper {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
+    /* ElevenLabs widget positions itself fixed bottom-right natively */
+    elevenlabs-convai {
       z-index: 9999;
     }
   </style>
@@ -246,18 +243,11 @@
   <!-- ══════════════════════════════════════════
        ELEVENLABS CONVAI WIDGET
        Drop-in conversational AI assistant.
-       Replace data-agent-id with your agent ID.
+       Replace YOUR_AGENT_ID_HERE with your agent ID
+       from the ElevenLabs dashboard → Conversational AI.
   ══════════════════════════════════════════ -->
-  <div class="convai-wrapper">
-    <elevenlabs-convai agent-id="YOUR_AGENT_ID_HERE"></elevenlabs-convai>
-  </div>
-
-  <!-- ElevenLabs Convai SDK (loads the custom element) -->
-  <script
-    src="https://unpkg.com/@elevenlabs/convai-widget/dist/convai-widget.js"
-    type="module"
-    defer
-  ></script>
+  <elevenlabs-convai agent-id="agent_1001m2e6k3s2emh820nrgz7c3ngz"></elevenlabs-convai>
+  <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 
   <!-- Your existing application script -->
   <script src="script.js" defer></script>
