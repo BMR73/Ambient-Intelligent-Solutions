@@ -39,13 +39,17 @@ async function loadOrders() {
       status.innerText = `Status: ${order.status}`;
       card.appendChild(status);
 
-      // Items
+      // Items container
       const itemsContainer = document.createElement('div');
       itemsContainer.className = 'items-container';
 
       order.pending_order_items.forEach(item => {
         const itemElement = document.createElement('div');
         itemElement.className = 'item';
+
+        // SAFELY NORMALIZE ARRAYS
+        const modifiers = Array.isArray(item.modifiers) ? item.modifiers : [];
+        const dietary = Array.isArray(item.dietary) ? item.dietary : [];
 
         itemElement.innerHTML = `
           <div class="item-name">
@@ -54,16 +58,16 @@ async function loadOrders() {
 
           <div class="item-modifiers">
             ${
-              item.modifiers && item.modifiers.length > 0
-                ? `<strong>Modifiers:</strong> ${item.modifiers.join(', ')}`
+              modifiers.length > 0
+                ? `<strong>Modifiers:</strong> ${modifiers.join(', ')}`
                 : ''
             }
           </div>
 
           <div class="item-dietary">
             ${
-              item.dietary && item.dietary.length > 0
-                ? `<strong>Dietary:</strong> ${item.dietary.join(', ')}`
+              dietary.length > 0
+                ? `<strong>Dietary:</strong> ${dietary.join(', ')}`
                 : ''
             }
           </div>
