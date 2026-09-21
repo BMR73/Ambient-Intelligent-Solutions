@@ -41,51 +41,49 @@ app.get("/api/orders", (req, res) => {
 });
 
 // ---------- Create New Order (AIS-6.0) ----------
-// Accepts payloads from ElevenLabs function:
-// {
-//   "waitstaff_id": <number or string>,
-//   "waitstaff_name": "<string>",
-//   "table": <number or string>,
-//   "pending_order_items": [
-//     { "name": "<menu item>", "course": "<entree|appetizer|drink>", "modifiers": [], "dietary": [] }
-//   ]
-// }
+// ElevenLabs webhook sends:
+// { "order_json": "<stringified AIS-6.0 JSON>" }
 
 app.post("/api/order", (req, res) => {
-  const body = req.body;
+  try {
+    const raw = req.body.order_json;
 
-  // Accept both "items" and "pending_order_items" from AIS-6.0
-  const incomingItems = body.items || body.pending_order_items || [];
+    if (!raw) {
+      return res.status(400).json({ error: "Missing order_json" });
+    }
 
-  // Normalize items into AIS-6.0 format
-  const normalizedItems = incomingItems.map(item => ({
-    name: item.name || null,
-    course: item.course || null,
-    modifiers: Array.isArray(item.modifiers) ? item.modifiers : [],
-    dietary: Array.isArray(item.dietary) ? item.dietary : []
-  }));
+    // Parse AIS-6.0 JSON
+    const parsed = JSON.parse(raw);
 
-  const newOrder = {
-    id: Date.now(),
-    waitstaff_id: body.waitstaff_id !== undefined
-      ? Number(body.waitstaff_id)
-      : null,
-    waitstaff_name: body.waitstaff_name || null,
-    table: body.table !== undefined
-      ? Number(body.table)
-      : null,
-    items: normalizedItems,
-    ready: false,
-    ready_at: null,
-    complete: false,
-    created_at: new Date().toISOString()
-  };
+    const {
+      waitstaff_id,
+      waitstaff_name,
+      table,
+      pending_order_items
+    } = parsed.arguments;
 
-  const orders = readOrders();
-  orders.push(newOrder);
-  writeOrders(orders);
+    const newOrder = {
+      id: Date.now(),
+      waitstaff_id,
+      waitstaff_name,
+      table,
+      items: pending_order_items,
+      ready: false,
+      ready_at: null,
+      complete: false,
+      created_at: new Date().toISOString()
+    };
 
-  res.json({ success: true, order: newOrder });
+    const orders = readOrders();
+    orders.push(newOrder);
+    writeOrders(orders);
+
+    res.json({ success: true, order: newOrder });
+
+  } catch (err) {
+    console.error("Failed to parse AIS order:", err);
+    res.status(400).json({ error: "Invalid AIS order JSON" });
+  }
 });
 
 // ---------- Toggle Ready ----------
