@@ -9,9 +9,9 @@ async function loadOrders() {
     const response = await fetch('/api/orders');
     const orders = await response.json();
 
-    // ── DEBUG: log actual field names from the API so you can verify them ──
+    // ── DEBUG: top-level order keys ───────────────────────────────────
     if (orders.length > 0) {
-      console.log('[Chef] API field names on order object:', Object.keys(orders[0]));
+      console.log('[Chef] Order keys:', Object.keys(orders[0]));
       console.log('[Chef] First order (raw):', orders[0]);
     }
 
@@ -19,10 +19,29 @@ async function loadOrders() {
 
     orders.forEach(order => {
 
-      // ── Normalise field names — try every common variant ──────────────
+      // ── Normalise top-level fields ────────────────────────────────────
       const orderId    = order.order_id    ?? order.id           ?? order.orderId     ?? '—';
       const placedTime = order.placed_time ?? order.created_at   ?? order.placedAt    ?? order.timestamp ?? order.placed_at ?? '—';
-      const status     = order.status      ?? order.order_status ?? order.orderStatus ?? '—';
+      const status     = order.status      ?? order.order_status ?? order.orderStatus ?? order.state     ?? '—';
+
+      // ── Normalise items array — try every common field name ───────────
+      const items =
+        Array.isArray(order.pending_order_items) ? order.pending_order_items :
+        Array.isArray(order.items)               ? order.items               :
+        Array.isArray(order.order_items)         ? order.order_items         :
+        Array.isArray(order.orderItems)          ? order.orderItems          :
+        Array.isArray(order.line_items)          ? order.line_items          :
+        Array.isArray(order.dishes)              ? order.dishes              :
+        [];
+
+      // ── DEBUG: item structure (only logs once per order) ──────────────
+      if (items.length > 0) {
+        console.log('[Chef] Item keys:', Object.keys(items[0]));
+        console.log('[Chef] First item (raw):', items[0]);
+      } else {
+        console.warn('[Chef] No items found for order', orderId,
+          '— checked: pending_order_items, items, order_items, orderItems, line_items, dishes');
+      }
 
       // ── Card shell ────────────────────────────────────────────────────
       const card = document.createElement('div');
@@ -54,22 +73,31 @@ async function loadOrders() {
       const itemsContainer = document.createElement('div');
       itemsContainer.className = 'items-container';
 
-      const items = Array.isArray(order.pending_order_items)
-        ? order.pending_order_items : [];
-
       items.forEach(item => {
         const itemElement = document.createElement('div');
         itemElement.className = 'item';
 
-        const modifiers = Array.isArray(item.modifiers) ? item.modifiers : [];
-        const dietary   = Array.isArray(item.dietary)   ? item.dietary   : [];
+        // Normalise item sub-fields
+        const name    = item.name      ?? item.item_name ?? item.title       ?? item.dish     ?? '—';
+        const course  = item.course    ?? item.category  ?? item.type        ?? item.section  ?? '';
+        const mods    = Array.isArray(item.modifiers)           ? item.modifiers           :
+                        Array.isArray(item.modifications)       ? item.modifications       :
+                        Array.isArray(item.options)             ? item.options             :
+                        Array.isArray(item.extras)              ? item.extras              :
+                        Array.isArray(item.special_instructions)? item.special_instructions:
+                        [];
+        const dietary = Array.isArray(item.dietary)              ? item.dietary              :
+                        Array.isArray(item.dietary_restrictions) ? item.dietary_restrictions :
+                        Array.isArray(item.allergens)            ? item.allergens            :
+                        Array.isArray(item.flags)                ? item.flags               :
+                        [];
 
         itemElement.innerHTML = `
           <div class="item-name">
-            ${item.name} <span class="course">(${item.course})</span>
+            ${name}${course ? ` <span class="course">(${course})</span>` : ''}
           </div>
           <div class="item-modifiers">
-            ${modifiers.length > 0 ? `<strong>Modifiers:</strong> ${modifiers.join(', ')}` : ''}
+            ${mods.length    > 0 ? `<strong>Modifiers:</strong> ${mods.join(', ')}`    : ''}
           </div>
           <div class="item-dietary">
             ${dietary.length > 0 ? `<strong>Dietary:</strong> ${dietary.join(', ')}` : ''}
