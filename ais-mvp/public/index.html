@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chef Dashboard — AIS-6.0</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ───────────────────────────────────────────────
+       Base Reset & Variables
+    ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --clr-bg:         #1a1a1a;
+      --clr-surface:    #242424;
+      --clr-surface-2:  #2e2e2e;
+      --clr-border:     #3a3a3a;
+      --clr-accent:     #f0a500;
+      --clr-accent-dim: #c47f00;
+      --clr-green:      #2ecc71;
+      --clr-red:        #e74c3c;
+      --clr-blue:       #3498db;
+      --clr-text:       #f0f0f0;
+      --clr-muted:      #9a9a9a;
+      --radius:         10px;
+      --shadow:         0 4px 16px rgba(0,0,0,.45);
+      --transition:     0.2s ease;
+      --font-main:      'Segoe UI', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      font-family: var(--font-main);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* ───────────────────────────────────────────────
+       Layout Shell
+    ─────────────────────────────────────────────── */
+    .app-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 100vh;
+    }
+
+    /* ───────────────────────────────────────────────
+       Top Header Bar
+    ─────────────────────────────────────────────── */
+    header.main-header {
+      background: var(--clr-surface);
+      border-bottom: 2px solid var(--clr-accent);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-brand .logo-icon {
+      font-size: 1.75rem;
+      line-height: 1;
+    }
+
+    .header-brand h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--clr-accent);
+      letter-spacing: 0.02em;
+    }
+
+    .header-brand .system-tag {
+      font-size: 0.7rem;
+      background: var(--clr-accent-dim);
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .header-time {
+      font-size: 0.85rem;
+      color: var(--clr-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #live-clock {
+      color: var(--clr-text);
+      font-weight: 600;
+    }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--clr-green);
+      font-weight: 500;
+    }
+
+    .status-dot::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--clr-green);
+      box-shadow: 0 0 6px var(--clr-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .4; }
+    }
+
+    /* ───────────────────────────────────────────────
+       Stats Bar
+    ─────────────────────────────────────────────── */
+    .stats-bar {
+      background: var(--clr-surface-2);
+      border-bottom: 1px solid var(--clr-border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 130px;
+      flex: 1;
+    }
+
+    .stat-icon { font-size: 1.4rem; line-height: 1; }
+
+    .stat-info { display: flex; flex-direction: column; }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--clr-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--clr-accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ───────────────────────────────────────────────
+       Main Content
+    ─────────────────────────────────────────────── */
+    main.dashboard-main {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    /* ───────────────────────────────────────────────
+       Section Header
+    ─────────────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--clr-text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title .badge {
+      background: var(--clr-accent);
+      color: #111;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .section-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      border: 1px solid var(--clr-border);
+      background: var(--clr-surface);
+      color: var(--clr-text);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .btn:hover {
+      background: var(--clr-surface-2);
+      border-color: var(--clr-accent);
+    }
+
+    .btn.btn-accent {
+      background: var(--clr-accent);
+      color: #111;
+      border-color: var(--clr-accent);
+      font-weight: 700;
+    }
+
+    .btn.btn-accent:hover { background: var(--clr-accent-dim); }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-tab {
+      padding: 0.3rem 0.9rem;
+      border-radius: 20px;
+      border: 1px solid var(--clr-border);
+      background: var(--clr-surface);
+      color: var(--clr-muted);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-weight: 500;
+    }
+
+    .filter-tab:hover,
+    .filter-tab.active {
+      background: var(--clr-accent);
+      color: #111;
+      border-color: var(--clr-accent);
+      font-weight: 700;
+    }
+
+    /* ───────────────────────────────────────────────
+       Orders Container  ← script.js target
+    ─────────────────────────────────────────────── */
+    #orders {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    /* ── Placeholder shown before script.js loads ── */
+    #orders .orders-placeholder {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--clr-muted);
+      border: 2px dashed var(--clr-border);
+      border-radius: var(--radius);
+    }
+
+    #orders .orders-placeholder .ph-icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+
+    #orders .orders-placeholder p {
+      font-size: 0.9rem;
+    }
+
+    /* ── Order Card (script.js should inject these) ── */
+    .order-card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      transition: transform var(--transition), box-shadow var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .order-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--clr-accent);
+    }
+
+    .order-card.status-new::before    { background: var(--clr-blue); }
+    .order-card.status-cooking::before{ background: var(--clr-accent); }
+    .order-card.status-ready::before  { background: var(--clr-green); }
+    .order-card.status-urgent::before { background: var(--clr-red); }
+
+    .order-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .order-number {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--clr-accent);
+    }
+
+    .order-status-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-new     { background: rgba(52,152,219,.25); color: var(--clr-blue); }
+    .badge-cooking { background: rgba(240,165,0,.2);   color: var(--clr-accent); }
+    .badge-ready   { background: rgba(46,204,113,.2);  color: var(--clr-green); }
+    .badge-urgent  { background: rgba(231,76,60,.25);  color: var(--clr-red); }
+
+    .order-table {
+      font-size: 0.8rem;
+      color: var(--clr-muted);
+    }
+
+    .order-items {
+      list-style: none;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .order-items li::before {
+      content: '› ';
+      color: var(--clr-accent);
+      font-weight: 700;
+    }
+
+    .order-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--clr-border);
+    }
+
+    .order-timer {
+      font-size: 0.78rem;
+      color: var(--clr-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .order-timer.late { color: var(--clr-red); font-weight: 600; }
+
+    .order-actions { display: flex; gap: 0.4rem; }
+
+    .order-actions .btn { padding: 0.25rem 0.65rem; font-size: 0.72rem; }
+
+    /* ───────────────────────────────────────────────
+       Footer
+    ─────────────────────────────────────────────── */
+    footer.main-footer {
+      background: var(--clr-surface);
+      border-top: 1px solid var(--clr-border);
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--clr-muted);
+    }
+
+    /* ───────────────────────────────────────────────
+       Responsive
+    ─────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .header-meta .header-time { display: none; }
+      .stats-bar { padding: 0.75rem 1rem; }
+      main.dashboard-main { padding: 1rem; }
+      #orders { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════ -->
+  <header class="main-header">
+    <div class="header-brand">
+      <span class="logo-icon">🍳</span>
+      <h1>Chef Dashboard</h1>
+      <span class="system-tag">AIS-6.0</span>
+    </div>
+
+    <div class="header-meta">
+      <div class="header-time">
+        <span id="live-clock">--:--:--</span>
+      </div>
+      <div class="status-dot" id="connection-status">Connected</div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       STATS BAR
+  ════════════════════════════════════════════ -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <span class="stat-icon">📋</span>
+      <div class="stat-info">
+        <span class="stat-label">Open Orders</span>
+        <span class="stat-value" id="stat-open">0</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🔥</span>
+      <div class="stat-info">
+        <span class="stat-label">Cooking</span>
+        <span class="stat-value" id="stat-cooking">0</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">✅</span>
+      <div class="stat-info">
+        <span class="stat-label">Ready</span>
+        <span class="stat-value" id="stat-ready">0</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⚡</span>
+      <div class="stat-info">
+        <span class="stat-label">Urgent</span>
+        <span class="stat-value" id="stat-urgent">0</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⏱</span>
+      <div class="stat-info">
+        <span class="stat-label">Avg Wait</span>
+        <span class="stat-value" id="stat-avg-wait">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════════ -->
+  <main class="dashboard-main">
+
+    <!-- Section header -->
+    <div class="section-header">
+      <h2 class="section-title">
+        Active Orders
+        <span class="badge" id="order-count-badge">0</span>
+      </h2>
+      <div class="section-controls">
+        <button class="btn" id="btn-refresh">⟳ Refresh</button>
+        <button class="btn btn-accent" id="btn-new-order">+ New Order</button>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="filter-tabs" role="tablist" aria-label="Filter orders by status">
+      <button class="filter-tab active" data-filter="all"    role="tab">All</button>
+      <button class="filter-tab"        data-filter="new"    role="tab">New</button>
+      <button class="filter-tab"        data-filter="cooking"role="tab">Cooking</button>
+      <button class="filter-tab"        data-filter="ready"  role="tab">Ready</button>
+      <button class="filter-tab"        data-filter="urgent" role="tab">Urgent</button>
+    </div>
+
+    <!-- ──────────────────────────────────────────
+         ORDERS CONTAINER — script.js renders here
+    ─────────────────────────────────────────── -->
+    <div id="orders" aria-live="polite" aria-label="Order cards">
+
+      <!-- Placeholder: script.js will replace this content -->
+      <div class="orders-placeholder">
+        <span class="ph-icon">📭</span>
+        <p>Waiting for orders from AIS-6.0…</p>
+      </div>
+
+    </div>
+    <!-- /#orders -->
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════════ -->
+  <footer class="main-footer">
+    <span>Chef Dashboard &copy; <span id="footer-year"></span></span>
+    <span id="footer-backend">AIS-6.0 Backend</span>
+    <span id="footer-last-updated">Last updated: —</span>
+  </footer>
+
+</div><!-- /.app-shell -->
+
+<!-- ═══════════════════════════════════════════
+     INLINE BOOTSTRAP — clock, tabs, footer year
+     (lightweight; your script.js takes over orders)
+════════════════════════════════════════════ -->
+<script>
+  /* ── Live clock ── */
+  function updateClock() {
+    const now  = new Date();
+    const hh   = String(now.getHours()).padStart(2, '0');
+    const mm   = String(now.getMinutes()).padStart(2, '0');
+    const ss   = String(now.getSeconds()).padStart(2, '0');
+    const el   = document.getElementById('live-clock');
+    if (el) el.textContent = `${hh}:${mm}:${ss}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ── Footer year ── */
+  const fyEl = document.getElementById('footer-year');
+  if (fyEl) fyEl.textContent = new Date().getFullYear();
+
+  /* ── Filter tabs ── */
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const filter = tab.dataset.filter;
+      // Expose globally so script.js can hook into it
+      if (typeof window.onOrderFilterChange === 'function') {
+        window.onOrderFilterChange(filter);
+      }
+      // Fallback: show/hide cards by class if script.js doesn't handle it
+      document.querySelectorAll('#orders .order-card').forEach(card => {
+        card.style.display = (filter === 'all' || card.classList.contains('status-' + filter))
+          ? '' : 'none';
+      });
+    });
+  });
+
+  /* ── Refresh button ── */
+  document.getElementById('btn-refresh')?.addEventListener('click', () => {
+    if (typeof window.loadOrders === 'function') window.loadOrders();
+  });
+
+  /* ── New Order button ── */
+  document.getElementById('btn-new-order')?.addEventListener('click', () => {
+    if (typeof window.openNewOrderModal === 'function') window.openNewOrderModal();
+  });
+
+  /* ── Utility: update stats counters (callable by script.js) ── */
+  window.updateStats = function(stats = {}) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('stat-open',    stats.open    ?? 0);
+    set('stat-cooking', stats.cooking ?? 0);
+    set('stat-ready',   stats.ready   ?? 0);
+    set('stat-urgent',  stats.urgent  ?? 0);
+    set('stat-avg-wait',stats.avgWait ?? '—');
+    const badge = document.getElementById('order-count-badge');
+    if (badge) badge.textContent = stats.open ?? 0;
+  };
+
+  /* ── Utility: update footer timestamp (callable by script.js) ── */
+  window.setLastUpdated = function(label) {
+    const el = document.getElementById('footer-last-updated');
+    if (el) el.textContent = 'Last updated: ' + label;
+  };
+
+  /* ── Utility: set connection status (callable by script.js) ── */
+  window.setConnectionStatus = function(online = true) {
+    const el = document.getElementById('connection-status');
+    if (!el) return;
+    el.textContent = online ? 'Connected' : 'Disconnected';
+    el.style.color  = online ? 'var(--clr-green)' : 'var(--clr-red)';
+  };
+</script>
+
+<!-- Your external scripts — adjust paths as needed -->
+<script src="script.js" defer></script>
+
+</body>
+</html>
