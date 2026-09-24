@@ -113,3 +113,15 @@ button:hover {
 button:active {
   background-color: #0d47a1;
 }
+
+/* Missing field highlight */
+.missing-field {
+  background-color: #fff8a0;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%   { background-color: #fff8a0; }
+  50%  { background-color: #ffe94d; }
+  100% { background-color: #fff8a0; }
+}
