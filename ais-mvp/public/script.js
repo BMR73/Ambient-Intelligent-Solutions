@@ -85,6 +85,22 @@ function buildOrderCard(order, isCompleted = false) {
   `;
   card.appendChild(meta);
 
+  // Highlight missing waitstaff or table
+  const missingWaitstaff =
+    !order.waitstaff_name ||
+    order.waitstaff_name === 'null' ||
+    order.waitstaff_name === 'undefined';
+
+  const missingTable =
+    order.table === null ||
+    order.table === undefined ||
+    order.table === '' ||
+    order.table === 'null';
+
+  if (missingWaitstaff || missingTable) {
+    meta.classList.add('missing-field');
+  }
+
   // Status badge (from API or local)
   const statusEl = document.createElement('div');
   statusEl.className = 'status-tag';
