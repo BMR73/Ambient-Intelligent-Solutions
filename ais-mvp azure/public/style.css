@@ -1,0 +1,127 @@
+/* Global Layout */
+body {
+  background-color: #f5f5f5;
+  color: #333;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+/* Page Title */
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: 700;
+  color: #222;
+}
+
+/* Order Card Container */
+.order-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+/* Order Header */
+.order-header {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+/* Order Meta Info */
+.order-meta {
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  color: #555;
+}
+
+/* Status Labels */
+.status-pending {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+.status-ready {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.status-complete {
+  color: #9e9e9e;
+  font-weight: 600;
+}
+
+/* Item List */
+.item {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+/* Item Name + Course */
+.item-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.course {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #777;
+}
+
+/* Modifiers & Dietary */
+.item-modifiers,
+.item-dietary {
+  font-size: 0.9rem;
+  margin-left: 10px;
+  margin-top: 4px;
+  color: #444;
+}
+
+.item-modifiers strong,
+.item-dietary strong {
+  color: #222;
+}
+
+/* Buttons */
+button {
+  background-color: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: #1565c0;
+}
+
+button:active {
+  background-color: #0d47a1;
+}
+
+/* Missing field highlight */
+.missing-field {
+  background-color: #fff8a0;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%   { background-color: #fff8a0; }
+  50%  { background-color: #ffe94d; }
+  100% { background-color: #fff8a0; }
+}
